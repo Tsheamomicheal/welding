@@ -218,7 +218,7 @@
           <p style="color: var(--muted); margin: 0;">Manage gallery images for Mothotsi Security Steel</p>
         </div>
         <div style="display: flex; gap: 10px;">
-          <a href="/gallery" class="btn btn-secondary">View Gallery</a>
+          <a href="gallery.html" class="btn btn-secondary">View Gallery</a>
           <button id="logoutBtn" class="btn btn-danger">Logout</button>
         </div>
       </div>
@@ -259,6 +259,9 @@
   </div>
 
   <script>
+    // Configuration for backend URL (can point to local or cloudflare worker)
+    const BACKEND_URL = ''; // Leave blank if on same host, or define standard backend endpoint if hosting static files elsewhere
+
     // State management
     let authToken = localStorage.getItem('adminToken') || '';
 
@@ -327,10 +330,20 @@
       showLogin();
     });
 
+    // Helper to read file as base64 Data URL
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+      });
+    }
+
     // Fetch images list
     async function loadImages() {
       try {
-        const res = await fetch('/api/images', {
+        const res = await fetch(`${BACKEND_URL}/api/images`, {
           headers: { 'Authorization': authToken }
         });
 
@@ -352,7 +365,7 @@
       }
     }
 
-    function renderImages(images) {
+    async function renderImages(images) {
       imageCount.textContent = images.length;
       imageGrid.innerHTML = '';
 
@@ -363,12 +376,12 @@
 
       emptyMessage.classList.add('hidden');
 
-      images.forEach(img => {
+      for (const img of images) {
         const col = document.createElement('div');
         col.className = 'image-card';
         col.innerHTML = `
           <div class="image-preview-wrapper">
-            <img src="/image/${img.id}" alt="${escapeHtml(img.title)}" />
+            <img id="img-el-${img.id}" src="" alt="${escapeHtml(img.title)}" />
           </div>
           <div class="image-info">
             <div class="image-title" id="title-${img.id}">${escapeHtml(img.title)}</div>
@@ -379,7 +392,21 @@
           </div>
         `;
         imageGrid.appendChild(col);
-      });
+
+        // Fetch the raw base64 data to set as source
+        try {
+          const imgRes = await fetch(`${BACKEND_URL}/image/${img.id}`);
+          if (imgRes.ok) {
+            const base64Str = await imgRes.text();
+            const imgEl = document.getElementById(`img-el-${img.id}`);
+            if (imgEl) {
+              imgEl.src = base64Str;
+            }
+          }
+        } catch (e) {
+          console.error("Error loading image content for id: " + img.id, e);
+        }
+      }
     }
 
     // Escape helper
@@ -409,16 +436,20 @@
 
       dashboardScreen.classList.add('loading');
 
-      // Create FormData to send multipart upload
-      const formData = new FormData();
-      formData.append('title', title);
-      formData.append('file', file);
-
       try {
-        const res = await fetch('/api/upload', {
+        // Convert file to base64 Data URL
+        const base64Image = await fileToBase64(file);
+
+        const res = await fetch(`${BACKEND_URL}/api/upload`, {
           method: 'POST',
-          headers: { 'Authorization': authToken },
-          body: formData
+          headers: {
+            'Authorization': authToken,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            title: title,
+            image: base64Image
+          })
         });
 
         if (res.status === 401) {
@@ -458,7 +489,7 @@
       dashboardScreen.classList.add('loading');
 
       try {
-        const res = await fetch('/api/edit', {
+        const res = await fetch(`${BACKEND_URL}/api/edit`, {
           method: 'POST',
           headers: {
             'Authorization': authToken,
@@ -497,7 +528,7 @@
       dashboardScreen.classList.add('loading');
 
       try {
-        const res = await fetch('/api/delete', {
+        const res = await fetch(`${BACKEND_URL}/api/delete`, {
           method: 'POST',
           headers: {
             'Authorization': authToken,

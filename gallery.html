@@ -24,11 +24,82 @@
 
     <p>Explore some of our recent steel and gate installation work.</p>
 
-    <div class="gallery">
-      <div class="tile"><img src="header/mothotsi.jpg" alt="Project 1" /><p>Project 1</p></div>
-      <div class="tile"><img src="header/mothotsi.jpg" alt="Project 2" /><p>Project 2</p></div>
-      <div class="tile"><img src="header/mothotsi.jpg" alt="Project 3" /><p>Project 3</p></div>
+    <div class="gallery" id="galleryContainer">
+      <div style="grid-column: 1 / -1; text-align: center; color: #64748b; padding: 40px 0;" id="loadingMessage">
+        <h3>Loading gallery images...</h3>
+      </div>
     </div>
   </div>
+
+  <script>
+    // Configuration for backend URL (can point to local or cloudflare worker)
+    const BACKEND_URL = ''; // Leave blank if on same host, or define standard backend endpoint if hosting static files elsewhere
+
+    // Escape helper
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    async function loadGallery() {
+      const container = document.getElementById('galleryContainer');
+      const loadingMessage = document.getElementById('loadingMessage');
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/images`);
+        if (!res.ok) {
+          throw new Error('Failed to load images from API');
+        }
+
+        const images = await res.json();
+
+        if (images.length === 0) {
+          container.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; color: #64748b; padding: 40px 0;">
+              <h3>No images have been uploaded to the gallery yet.</h3>
+              <p>Check back later or contact admin to upload project pictures!</p>
+            </div>`;
+          return;
+        }
+
+        // Clear loading message
+        container.innerHTML = '';
+
+        for (const img of images) {
+          const tile = document.createElement('div');
+          tile.className = 'tile';
+          tile.innerHTML = `
+            <img id="gallery-img-${img.id}" src="" alt="${escapeHtml(img.title)}" />
+            <p>${escapeHtml(img.title)}</p>
+          `;
+          container.appendChild(tile);
+
+          // Fetch the raw base64 data to set as source
+          try {
+            const imgRes = await fetch(`${BACKEND_URL}/image/${img.id}`);
+            if (imgRes.ok) {
+              const base64Str = await imgRes.text();
+              const imgEl = document.getElementById(`gallery-img-${img.id}`);
+              if (imgEl) {
+                imgEl.src = base64Str;
+              }
+            }
+          } catch (e) {
+            console.error("Error loading image content for id: " + img.id, e);
+          }
+        }
+
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; color: #ef4444; padding: 40px 0;">
+            <h3>Failed to load gallery images.</h3>
+            <p>${escapeHtml(err.message)}</p>
+          </div>`;
+      }
+    }
+
+    // Load gallery on page load
+    window.addEventListener('DOMContentLoaded', loadGallery);
+  </script>
 </body>
 </html>
