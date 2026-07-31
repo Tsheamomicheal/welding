@@ -6,23 +6,25 @@
   <title>Admin Panel - Mothotsi Security Steel</title>
   <style>
     :root {
-      --primary: #0b5ed7;
-      --secondary: #3b82f6;
-      --accent: #f8fbff;
-      --text: #1e293b;
-      --muted: #64748b;
-      --success: #22c55e;
-      --danger: #ef4444;
-      --deep: #0f172a;
+      --primary: #d97706; /* warm gold/amber */
+      --primary-hover: #b45309; /* darker warm gold/amber */
+      --secondary: #f59e0b; /* medium amber */
+      --accent: #fef3c7; /* very light amber */
+      --text: #1e293b; /* deep slate gray */
+      --muted: #64748b; /* slate gray muted */
+      --success: #16a34a; /* success green */
+      --danger: #ef4444; /* danger red */
+      --deep: #0f172a; /* deep charcoal */
+      --border: #e2e8f0; /* light gray border */
     }
 
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       color: var(--text);
       line-height: 1.6;
-      background: linear-gradient(180deg, #054ba7 0%, #eef6ff 100%);
+      background-color: #f1f5f9;
       min-height: 100vh;
       padding: 20px;
     }
@@ -35,7 +37,8 @@
     .card {
       background: white;
       border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(11, 94, 215, 0.15);
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
       padding: 30px;
       margin-bottom: 20px;
     }
@@ -69,13 +72,13 @@
     }
 
     .btn-primary { background: var(--primary); color: white; }
-    .btn-primary:hover { background: #0a53be; }
+    .btn-primary:hover { background: var(--primary-hover); }
     .btn-danger { background: var(--danger); color: white; }
-    .btn-danger:hover { background: #dc3545; }
+    .btn-danger:hover { background: #b91c1c; }
     .btn-secondary { background: #e2e8f0; color: var(--text); }
     .btn-secondary:hover { background: #cbd5e1; }
     .btn-success { background: var(--success); color: white; }
-    .btn-success:hover { background: #16a34a; }
+    .btn-success:hover { background: #15803d; }
 
     /* Login Form Styles */
     .login-container {
@@ -106,6 +109,7 @@
 
     .form-control:focus {
       border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
     }
 
     /* Grid Layout */
