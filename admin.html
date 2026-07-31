@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel - Mothotsi Security Steel</title>
+  <style>
+    :root {
+      --primary: #0b5ed7;
+      --secondary: #3b82f6;
+      --accent: #f8fbff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --deep: #0f172a;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      line-height: 1.6;
+      background: linear-gradient(180deg, #054ba7 0%, #eef6ff 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(11, 94, 215, 0.15);
+      padding: 30px;
+      margin-bottom: 20px;
+    }
+
+    h1, h2, h3 {
+      color: var(--deep);
+      margin-top: 0;
+    }
+
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+    }
+
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: #0a53be; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: #dc3545; }
+    .btn-secondary { background: #e2e8f0; color: var(--text); }
+    .btn-secondary:hover { background: #cbd5e1; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { background: #16a34a; }
+
+    /* Login Form Styles */
+    .login-container {
+      max-width: 400px;
+      margin: 100px auto 0;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary);
+    }
+
+    /* Grid Layout */
+    .upload-section {
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 24px;
+      margin-bottom: 24px;
+    }
+
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .image-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .image-preview-wrapper {
+      position: relative;
+      width: 100%;
+      padding-top: 75%; /* 4:3 aspect ratio */
+      background: #e2e8f0;
+    }
+
+    .image-preview-wrapper img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .image-info {
+      padding: 12px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .image-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 12px;
+      color: var(--deep);
+      word-break: break-word;
+    }
+
+    .image-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .image-actions .btn {
+      flex: 1;
+      padding: 8px 10px;
+      font-size: 0.85rem;
+    }
+
+    /* Overlay loader / alerts */
+    .alert {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-weight: 500;
+      display: none;
+    }
+
+    .alert-danger { background: #ffeeef; color: var(--danger); border: 1px solid #fecaca; }
+    .alert-success { background: #f0fdf4; color: var(--success); border: 1px solid #bbf7d0; }
+
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    /* Hidden utilities */
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="card login-container">
+      <h2 style="text-align: center; margin-bottom: 24px;">Admin Security Check</h2>
+      <div id="loginAlert" class="alert alert-danger"></div>
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="password">Enter Passcode</label>
+          <input type="password" id="password" class="form-control" placeholder="••••••••" required />
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Access Panel</button>
+      </form>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
+    <div id="dashboardScreen" class="card hidden">
+      <div class="admin-header">
+        <div>
+          <h1>Admin Control Panel</h1>
+          <p style="color: var(--muted); margin: 0;">Manage gallery images for Mothotsi Security Steel</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <a href="/gallery" class="btn btn-secondary">View Gallery</a>
+          <button id="logoutBtn" class="btn btn-danger">Logout</button>
+        </div>
+      </div>
+
+      <div id="actionAlert" class="alert"></div>
+
+      <!-- Upload Section -->
+      <div class="upload-section">
+        <h3>Upload New Project Photo</h3>
+        <form id="uploadForm" style="display: flex; flex-direction: column; gap: 16px;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+            <div class="form-group" style="margin: 0;">
+              <label for="photoTitle">Project Title / Caption</label>
+              <input type="text" id="photoTitle" class="form-control" placeholder="e.g. Modern Steel Sliding Gate" required />
+            </div>
+            <div class="form-group" style="margin: 0;">
+              <label for="photoFile">Choose Image File</label>
+              <input type="file" id="photoFile" class="form-control" accept="image/*" required />
+            </div>
+          </div>
+          <div>
+            <button type="submit" id="uploadBtn" class="btn btn-success">Upload and Publish</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Current Pictures -->
+      <div>
+        <h3>Current Gallery Images (<span id="imageCount">0</span>)</h3>
+        <div id="emptyMessage" style="text-align: center; color: var(--muted); padding: 40px 0;">
+          No images uploaded yet. Use the form above to add your first photo!
+        </div>
+        <div id="imageGrid" class="image-grid">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State management
+    let authToken = localStorage.getItem('adminToken') || '';
+
+    // Elements
+    const loginScreen = document.getElementById('loginScreen');
+    const dashboardScreen = document.getElementById('dashboardScreen');
+    const loginForm = document.getElementById('loginForm');
+    const passwordInput = document.getElementById('password');
+    const loginAlert = document.getElementById('loginAlert');
+    const actionAlert = document.getElementById('actionAlert');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const uploadForm = document.getElementById('uploadForm');
+    const imageGrid = document.getElementById('imageGrid');
+    const imageCount = document.getElementById('imageCount');
+    const emptyMessage = document.getElementById('emptyMessage');
+
+    // Init page based on auth state
+    function init() {
+      if (authToken) {
+        showDashboard();
+      } else {
+        showLogin();
+      }
+    }
+
+    function showLogin() {
+      loginScreen.classList.remove('hidden');
+      dashboardScreen.classList.add('hidden');
+      passwordInput.value = '';
+      passwordInput.focus();
+    }
+
+    function showDashboard() {
+      loginScreen.classList.add('hidden');
+      dashboardScreen.classList.remove('hidden');
+      loadImages();
+    }
+
+    function showAlert(element, message, type = 'success') {
+      element.textContent = message;
+      element.className = `alert alert-${type}`;
+      element.style.display = 'block';
+      setTimeout(() => {
+        element.style.display = 'none';
+      }, 5000);
+    }
+
+    // Login Submission
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const enteredPassword = passwordInput.value.trim();
+
+      if (enteredPassword === 'm1m1') {
+        authToken = enteredPassword;
+        localStorage.setItem('adminToken', authToken);
+        showDashboard();
+      } else {
+        showAlert(loginAlert, 'Incorrect passcode. Access Denied.', 'danger');
+      }
+    });
+
+    // Logout
+    logoutBtn.addEventListener('click', () => {
+      authToken = '';
+      localStorage.removeItem('adminToken');
+      showLogin();
+    });
+
+    // Fetch images list
+    async function loadImages() {
+      try {
+        const res = await fetch('/api/images', {
+          headers: { 'Authorization': authToken }
+        });
+
+        if (res.status === 401) {
+          authToken = '';
+          localStorage.removeItem('adminToken');
+          showLogin();
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error('Failed to load images');
+        }
+
+        const images = await res.json();
+        renderImages(images);
+      } catch (err) {
+        showAlert(actionAlert, 'Error loading gallery: ' + err.message, 'danger');
+      }
+    }
+
+    function renderImages(images) {
+      imageCount.textContent = images.length;
+      imageGrid.innerHTML = '';
+
+      if (images.length === 0) {
+        emptyMessage.classList.remove('hidden');
+        return;
+      }
+
+      emptyMessage.classList.add('hidden');
+
+      images.forEach(img => {
+        const col = document.createElement('div');
+        col.className = 'image-card';
+        col.innerHTML = `
+          <div class="image-preview-wrapper">
+            <img src="/image/${img.id}" alt="${escapeHtml(img.title)}" />
+          </div>
+          <div class="image-info">
+            <div class="image-title" id="title-${img.id}">${escapeHtml(img.title)}</div>
+            <div class="image-actions">
+              <button class="btn btn-secondary" onclick="editTitle('${img.id}', '${escapeHtml(img.title)}')">Edit</button>
+              <button class="btn btn-danger" onclick="deleteImage('${img.id}')">Delete</button>
+            </div>
+          </div>
+        `;
+        imageGrid.appendChild(col);
+      });
+    }
+
+    // Escape helper
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    // Upload Form Submission
+    uploadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const titleInput = document.getElementById('photoTitle');
+      const fileInput = document.getElementById('photoFile');
+
+      if (!fileInput.files || fileInput.files.length === 0) {
+        showAlert(actionAlert, 'Please select an image file to upload.', 'danger');
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const title = titleInput.value.trim();
+
+      // Simple client-side validation for file size (max 20MB for safety)
+      if (file.size > 20 * 1024 * 1024) {
+        showAlert(actionAlert, 'Image file size is too large (max limit 20MB).', 'danger');
+        return;
+      }
+
+      dashboardScreen.classList.add('loading');
+
+      // Create FormData to send multipart upload
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('file', file);
+
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Authorization': authToken },
+          body: formData
+        });
+
+        if (res.status === 401) {
+          authToken = '';
+          localStorage.removeItem('adminToken');
+          showLogin();
+          return;
+        }
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Upload failed');
+        }
+
+        showAlert(actionAlert, 'Image successfully uploaded!', 'success');
+        titleInput.value = '';
+        fileInput.value = '';
+        loadImages();
+      } catch (err) {
+        showAlert(actionAlert, 'Error uploading image: ' + err.message, 'danger');
+      } finally {
+        dashboardScreen.classList.remove('loading');
+      }
+    });
+
+    // Edit Image Title
+    window.editTitle = async function(id, currentTitle) {
+      const newTitle = prompt('Edit title for this project photo:', currentTitle);
+      if (newTitle === null) return; // User cancelled
+
+      const trimmedTitle = newTitle.trim();
+      if (!trimmedTitle) {
+        alert('Title cannot be empty');
+        return;
+      }
+
+      dashboardScreen.classList.add('loading');
+
+      try {
+        const res = await fetch('/api/edit', {
+          method: 'POST',
+          headers: {
+            'Authorization': authToken,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ id, title: trimmedTitle })
+        });
+
+        if (res.status === 401) {
+          authToken = '';
+          localStorage.removeItem('adminToken');
+          showLogin();
+          return;
+        }
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to update title');
+        }
+
+        showAlert(actionAlert, 'Title updated successfully!', 'success');
+        loadImages();
+      } catch (err) {
+        showAlert(actionAlert, 'Error updating title: ' + err.message, 'danger');
+      } finally {
+        dashboardScreen.classList.remove('loading');
+      }
+    };
+
+    // Delete Image
+    window.deleteImage = async function(id) {
+      if (!confirm('Are you sure you want to delete this image permanently? This action cannot be undone.')) {
+        return;
+      }
+
+      dashboardScreen.classList.add('loading');
+
+      try {
+        const res = await fetch('/api/delete', {
+          method: 'POST',
+          headers: {
+            'Authorization': authToken,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ id })
+        });
+
+        if (res.status === 401) {
+          authToken = '';
+          localStorage.removeItem('adminToken');
+          showLogin();
+          return;
+        }
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Deletion failed');
+        }
+
+        showAlert(actionAlert, 'Image deleted successfully!', 'success');
+        loadImages();
+      } catch (err) {
+        showAlert(actionAlert, 'Error deleting image: ' + err.message, 'danger');
+      } finally {
+        dashboardScreen.classList.remove('loading');
+      }
+    };
+
+    // Start App
+    init();
+  </script>
+</body>
+</html>
