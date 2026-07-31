@@ -6,38 +6,43 @@
   <title>Admin Panel - Mothotsi Security Steel</title>
   <style>
     :root {
-      --primary: #0b5ed7;
-      --secondary: #3b82f6;
-      --accent: #f8fbff;
-      --text: #1e293b;
-      --muted: #64748b;
-      --success: #22c55e;
-      --danger: #ef4444;
-      --deep: #0f172a;
+      --primary: #b45309;      /* Professional Amber/Gold */
+      --primary-hover: #92400e;
+      --secondary: #475569;    /* Slate Gray */
+      --accent: #fef3c7;       /* Soft Gold Accent Tint */
+      --background: #f8fafc;   /* Premium ultra-light slate */
+      --text: #1e293b;         /* Charcoal Dark Slate */
+      --text-muted: #64748b;   /* Muted Slate Gray */
+      --success: #16a34a;      /* Clean green */
+      --danger: #ef4444;       /* Clean red */
+      --deep: #0f172a;         /* Deep Slate Dark */
+      --border: #e2e8f0;       /* Soft borders */
     }
 
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       color: var(--text);
       line-height: 1.6;
-      background: linear-gradient(180deg, #054ba7 0%, #eef6ff 100%);
+      background-color: var(--background);
       min-height: 100vh;
-      padding: 20px;
+      padding: 20px 0;
     }
 
     .container {
       max-width: 900px;
       margin: 0 auto;
+      padding: 0 20px;
     }
 
     .card {
       background: white;
       border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(11, 94, 215, 0.15);
+      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+      border: 1px solid var(--border);
       padding: 30px;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
 
     h1, h2, h3 {
@@ -49,19 +54,21 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
       flex-wrap: wrap;
       gap: 12px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
     }
 
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 10px 16px;
+      padding: 10px 18px;
       border: none;
       border-radius: 8px;
-      font-weight: bold;
+      font-weight: 600;
       cursor: pointer;
       text-decoration: none;
       font-size: 0.95rem;
@@ -69,18 +76,18 @@
     }
 
     .btn-primary { background: var(--primary); color: white; }
-    .btn-primary:hover { background: #0a53be; }
+    .btn-primary:hover { background: var(--primary-hover); }
     .btn-danger { background: var(--danger); color: white; }
-    .btn-danger:hover { background: #dc3545; }
+    .btn-danger:hover { background: #dc2626; }
     .btn-secondary { background: #e2e8f0; color: var(--text); }
     .btn-secondary:hover { background: #cbd5e1; }
     .btn-success { background: var(--success); color: white; }
-    .btn-success:hover { background: #16a34a; }
+    .btn-success:hover { background: #15803d; }
 
     /* Login Form Styles */
     .login-container {
-      max-width: 400px;
-      margin: 100px auto 0;
+      max-width: 420px;
+      margin: 80px auto 0;
     }
 
     .form-group {
@@ -91,26 +98,28 @@
       display: block;
       margin-bottom: 6px;
       font-weight: 600;
-      color: var(--text);
+      color: var(--deep);
     }
 
     .form-control {
       width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #cbd5e1;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
       border-radius: 8px;
       font-size: 1rem;
       outline: none;
-      transition: border-color 0.2s;
+      color: var(--text);
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
 
     .form-control:focus {
       border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.15);
     }
 
     /* Grid Layout */
     .upload-section {
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid var(--border);
       padding-bottom: 24px;
       margin-bottom: 24px;
     }
@@ -123,19 +132,26 @@
     }
 
     .image-card {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      background: white;
+      border: 1px solid var(--border);
       border-radius: 12px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .image-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
     }
 
     .image-preview-wrapper {
       position: relative;
       width: 100%;
       padding-top: 75%; /* 4:3 aspect ratio */
-      background: #e2e8f0;
+      background: #f1f5f9;
     }
 
     .image-preview-wrapper img {
@@ -176,14 +192,14 @@
 
     /* Overlay loader / alerts */
     .alert {
-      padding: 12px;
+      padding: 12px 16px;
       border-radius: 8px;
       margin-bottom: 16px;
       font-weight: 500;
       display: none;
     }
 
-    .alert-danger { background: #ffeeef; color: var(--danger); border: 1px solid #fecaca; }
+    .alert-danger { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
     .alert-success { background: #f0fdf4; color: var(--success); border: 1px solid #bbf7d0; }
 
     .loading {
@@ -191,7 +207,6 @@
       pointer-events: none;
     }
 
-    /* Hidden utilities */
     .hidden { display: none !important; }
   </style>
 </head>
@@ -199,7 +214,7 @@
   <div class="container">
     <!-- LOGIN SCREEN -->
     <div id="loginScreen" class="card login-container">
-      <h2 style="text-align: center; margin-bottom: 24px;">Admin Security Check</h2>
+      <h2 style="text-align: center; margin-bottom: 24px; color: var(--deep);">Admin Security Check</h2>
       <div id="loginAlert" class="alert alert-danger"></div>
       <form id="loginForm">
         <div class="form-group">
@@ -214,10 +229,10 @@
     <div id="dashboardScreen" class="card hidden">
       <div class="admin-header">
         <div>
-          <h1>Admin Control Panel</h1>
-          <p style="color: var(--muted); margin: 0;">Manage gallery images for Mothotsi Security Steel</p>
+          <h1 style="margin: 0 0 4px;">Admin Control Panel</h1>
+          <p style="color: var(--text-muted); margin: 0; font-size: 0.95rem;">Manage gallery images for Mothotsi Security Steel</p>
         </div>
-        <div style="display: flex; gap: 10px;">
+        <div style="display: flex; gap: 10px; align-items: center;">
           <a href="gallery.html" class="btn btn-secondary">View Gallery</a>
           <button id="logoutBtn" class="btn btn-danger">Logout</button>
         </div>
@@ -227,7 +242,7 @@
 
       <!-- Upload Section -->
       <div class="upload-section">
-        <h3>Upload New Project Photo</h3>
+        <h3 style="margin-bottom: 16px;">Upload New Project Photo</h3>
         <form id="uploadForm" style="display: flex; flex-direction: column; gap: 16px;">
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
             <div class="form-group" style="margin: 0;">
@@ -247,8 +262,8 @@
 
       <!-- Current Pictures -->
       <div>
-        <h3>Current Gallery Images (<span id="imageCount">0</span>)</h3>
-        <div id="emptyMessage" style="text-align: center; color: var(--muted); padding: 40px 0;">
+        <h3 style="margin-bottom: 16px;">Current Gallery Images (<span id="imageCount">0</span>)</h3>
+        <div id="emptyMessage" style="text-align: center; color: var(--text-muted); padding: 40px 0;">
           No images uploaded yet. Use the form above to add your first photo!
         </div>
         <div id="imageGrid" class="image-grid">
@@ -259,13 +274,10 @@
   </div>
 
   <script>
-    // Configuration for backend URL (can point to local or cloudflare worker)
-    const BACKEND_URL = 'https://shrill-disk-8aac.tshiamomichael4.workers.dev'; // Leave blank if on same host, or define standard backend endpoint if hosting static files elsewhere
+    const BACKEND_URL = 'https://shrill-disk-8aac.tshiamomichael4.workers.dev';
 
-    // State management
     let authToken = localStorage.getItem('adminToken') || '';
 
-    // Elements
     const loginScreen = document.getElementById('loginScreen');
     const dashboardScreen = document.getElementById('dashboardScreen');
     const loginForm = document.getElementById('loginForm');
@@ -278,7 +290,6 @@
     const imageCount = document.getElementById('imageCount');
     const emptyMessage = document.getElementById('emptyMessage');
 
-    // Init page based on auth state
     function init() {
       if (authToken) {
         showDashboard();
@@ -309,7 +320,6 @@
       }, 5000);
     }
 
-    // Login Submission
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const enteredPassword = passwordInput.value.trim();
@@ -323,14 +333,12 @@
       }
     });
 
-    // Logout
     logoutBtn.addEventListener('click', () => {
       authToken = '';
       localStorage.removeItem('adminToken');
       showLogin();
     });
 
-    // Helper to read file as base64 Data URL
     function fileToBase64(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -340,7 +348,6 @@
       });
     }
 
-    // Fetch images list
     async function loadImages() {
       try {
         const res = await fetch(`${BACKEND_URL}/api/images`, {
@@ -393,7 +400,6 @@
         `;
         imageGrid.appendChild(col);
 
-        // Fetch the raw base64 data to set as source
         try {
           const imgRes = await fetch(`${BACKEND_URL}/image/${img.id}`);
           if (imgRes.ok) {
@@ -409,12 +415,10 @@
       }
     }
 
-    // Escape helper
     function escapeHtml(str) {
       return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
 
-    // Upload Form Submission
     uploadForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const titleInput = document.getElementById('photoTitle');
@@ -428,7 +432,6 @@
       const file = fileInput.files[0];
       const title = titleInput.value.trim();
 
-      // Simple client-side validation for file size (max 20MB for safety)
       if (file.size > 20 * 1024 * 1024) {
         showAlert(actionAlert, 'Image file size is too large (max limit 20MB).', 'danger');
         return;
@@ -437,7 +440,6 @@
       dashboardScreen.classList.add('loading');
 
       try {
-        // Convert file to base64 Data URL
         const base64Image = await fileToBase64(file);
 
         const res = await fetch(`${BACKEND_URL}/api/upload`, {
@@ -475,10 +477,9 @@
       }
     });
 
-    // Edit Image Title
     window.editTitle = async function(id, currentTitle) {
       const newTitle = prompt('Edit title for this project photo:', currentTitle);
-      if (newTitle === null) return; // User cancelled
+      if (newTitle === null) return;
 
       const trimmedTitle = newTitle.trim();
       if (!trimmedTitle) {
@@ -519,7 +520,6 @@
       }
     };
 
-    // Delete Image
     window.deleteImage = async function(id) {
       if (!confirm('Are you sure you want to delete this image permanently? This action cannot be undone.')) {
         return;
@@ -558,7 +558,6 @@
       }
     };
 
-    // Start App
     init();
   </script>
 </body>

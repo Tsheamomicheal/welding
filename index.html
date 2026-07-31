@@ -7,22 +7,25 @@
   <meta name="description" content="Mothotsi Security Steel specializes in steel and aluminium fabrication, gate and garage door installation, gate motors, and steel staircase solutions." />
   <style>
     :root {
-      --primary: #0b5ed7;
-      --secondary: #3b82f6;
-      --accent: #f8fbff;
-      --text: #1e293b;
-      --muted: #1d4ed8;
-      --success: #22c55e;
-      --deep: #0f172a;
+      --primary: #b45309;      /* Professional Amber/Gold */
+      --primary-hover: #92400e;
+      --secondary: #475569;    /* Slate Gray */
+      --accent: #fef3c7;       /* Soft Gold Accent Tint */
+      --background: #f8fafc;   /* Premium ultra-light slate */
+      --text: #1e293b;         /* Charcoal Dark Slate */
+      --text-muted: #64748b;   /* Muted Slate Gray */
+      --success: #16a34a;      /* Clean green */
+      --deep: #0f172a;         /* Deep Slate Dark */
+      --border: #e2e8f0;       /* Soft borders */
     }
 
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       color: var(--text);
       line-height: 1.6;
-      background: linear-gradient(180deg, #054ba7 0%, #eef6ff 100%);
+      background-color: var(--background);
     }
 
     header {
@@ -43,10 +46,10 @@
       flex-direction: column;
       gap: 5px;
       padding: 10px;
-      border: none;
+      border: 1px solid var(--border);
       border-radius: 10px;
       background: rgba(255,255,255,0.96);
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
       cursor: pointer;
     }
 
@@ -54,7 +57,7 @@
       display: block;
       width: 22px;
       height: 2px;
-      background: var(--primary);
+      background: var(--deep);
       border-radius: 2px;
       transition: 0.25s ease;
     }
@@ -79,10 +82,11 @@
       display: none;
       flex-direction: column;
       min-width: 170px;
-      padding: 10px;
+      padding: 8px;
+      border: 1px solid var(--border);
       border-radius: 12px;
       background: white;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
     }
 
     .menu-panel.open {
@@ -95,11 +99,13 @@
       color: var(--deep);
       text-decoration: none;
       font-weight: 600;
+      font-size: 0.95rem;
+      transition: background 0.2s, color 0.2s;
     }
 
     .menu-panel a:hover {
-      background: #eef6ff;
-      color: var(--primary);
+      background: var(--accent);
+      color: var(--primary-hover);
     }
 
     header img {
@@ -113,71 +119,126 @@
     .card {
       background: white;
       border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(11, 94, 215, 0.12);
-      padding: 30px;
-      margin-top: 20px;
+      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.02);
+      border: 1px solid var(--border);
+      padding: 40px;
+      margin-top: 30px;
       position: relative;
       z-index: 2;
     }
 
-    .section { padding: 40px 0; }
-    .section h2 { color: var(--primary); margin-bottom: 15px; }
+    .card h2 {
+      color: var(--deep);
+      margin-top: 0;
+      border-bottom: 3px solid var(--accent);
+      padding-bottom: 8px;
+      display: inline-block;
+    }
+
+    .section { padding: 50px 0; }
+    .section h2 {
+      color: var(--deep);
+      margin-bottom: 24px;
+      font-size: 1.85rem;
+      position: relative;
+      padding-bottom: 10px;
+    }
+    .section h2::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 60px;
+      height: 3px;
+      background-color: var(--primary);
+      border-radius: 2px;
+    }
 
     .services {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 20px;
-      margin-top: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-top: 24px;
     }
 
     .service {
-      background: linear-gradient(135deg, #ffffff, #f0f7ff);
-      border-left: 4px solid var(--secondary);
-      padding: 20px;
+      background: white;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--primary);
+      padding: 28px;
       border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
+      transition: transform 0.2s, box-shadow 0.2s;
     }
 
-    .service h3 { margin-top: 0; color: var(--primary); }
+    .service:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    }
+
+    .service h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      color: var(--deep);
+      font-size: 1.25rem;
+    }
+
+    .service p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
 
     .cta {
       text-align: center;
-      background: linear-gradient(135deg, #0b5ed7, #60a5fa);
+      background: linear-gradient(135deg, #1e293b, #0f172a);
       color: white;
-      padding: 30px;
+      padding: 50px 40px;
       border-radius: 16px;
-      margin: 30px 0;
+      margin: 40px 0;
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15);
     }
 
-    .cta a {
-      display: inline-block;
-      margin-top: 10px;
-      background: white;
-      color: var(--primary);
-      text-decoration: none;
-      padding: 12px 20px;
-      border-radius: 999px;
-      font-weight: bold;
+    .cta h2 {
+      color: white;
+      margin-top: 0;
+      margin-bottom: 12px;
+      font-size: 2rem;
+    }
+
+    .cta p {
+      color: #cbd5e1;
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto 30px;
     }
 
     .contact-list {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 12px;
-      margin-top: 14px;
+      gap: 16px;
     }
 
     .contact-list a {
-      background: rgba(255,255,255,0.16);
-      color: white;
-      border: 1px solid rgba(255,255,255,0.25);
-      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #f1f5f9;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 12px 24px;
       border-radius: 999px;
       text-decoration: none;
       font-weight: 600;
+      font-size: 0.95rem;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      transition: all 0.2s;
+    }
+
+    .contact-list a:hover {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: rgba(255, 255, 255, 0.3);
+      color: white;
     }
 
     .contact-list a.whatsapp {
@@ -186,21 +247,31 @@
       border-color: var(--success);
     }
 
+    .contact-list a.whatsapp:hover {
+      background: #15803d;
+      border-color: #15803d;
+    }
+
     .contact-list .icon {
-      font-size: 1.1rem;
+      font-size: 1.2rem;
       line-height: 1;
     }
 
     footer {
       text-align: center;
-      padding: 25px 20px 50px;
-      color: var(--muted);
-      font-size: 0.95rem;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      border-top: 1px solid var(--border);
+      margin-top: 60px;
+      background-color: #ffffff;
     }
 
     @media (max-width: 700px) {
-      header h1 { font-size: 1.8rem; }
-      .card { padding: 22px; }
+      .card { padding: 24px; margin-top: 20px; }
+      .section { padding: 35px 0; }
+      .cta { padding: 35px 20px; }
+      .cta h2 { font-size: 1.6rem; }
     }
   </style>
 </head>
@@ -252,8 +323,6 @@
       </div>
     </section>
 
-    <!-- Gallery moved to a separate page: gallery.html -->
-
     <section class="cta" id="contact">
       <h2>Need a secure and durable solution?</h2>
       <p>Contact us today for expert steel, aluminium, gate, and garage door services.</p>
@@ -291,4 +360,3 @@
   </script>
 </body>
 </html>
- 
