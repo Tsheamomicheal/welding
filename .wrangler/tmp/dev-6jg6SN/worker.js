@@ -1,8 +1,35 @@
-// Worker to serve index.html, gallery.html (SSR), admin.html, static assets/fallback, and APIs
-const ADMIN_PASSWORD = "m1m1";
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
-// Fallback SVG for /header/mothotsi.jpg
-const FALLBACK_HERO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="100%" height="100%">
+// .wrangler/tmp/bundle-TDwAxA/checked-fetch.js
+var urls = /* @__PURE__ */ new Set();
+function checkURL(request, init) {
+  const url = request instanceof URL ? request : new URL(
+    (typeof request === "string" ? new Request(request, init) : request).url
+  );
+  if (url.port && url.port !== "443" && url.protocol === "https:") {
+    if (!urls.has(url.toString())) {
+      urls.add(url.toString());
+      console.warn(
+        `WARNING: known issue with \`fetch()\` requests to custom HTTPS ports in published Workers:
+ - ${url.toString()} - the custom port will be ignored when the Worker is published using the \`wrangler deploy\` command.
+`
+      );
+    }
+  }
+}
+__name(checkURL, "checkURL");
+globalThis.fetch = new Proxy(globalThis.fetch, {
+  apply(target, thisArg, argArray) {
+    const [request, init] = argArray;
+    checkURL(request, init);
+    return Reflect.apply(target, thisArg, argArray);
+  }
+});
+
+// worker.js
+var ADMIN_PASSWORD = "m1m1";
+var FALLBACK_HERO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="100%" height="100%">
   <defs>
     <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#0b5ed7" />
@@ -21,66 +48,47 @@ const FALLBACK_HERO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 
     MOTHOTSI SECURITY STEEL
   </text>
   <text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="500" fill="#cbd5e1" letter-spacing="1">
-    Premium Steel &amp; Aluminium Fabrication • Gate &amp; Garage Automation
+    Premium Steel &amp; Aluminium Fabrication \u2022 Gate &amp; Garage Automation
   </text>
 
   <path d="M 0 350 Q 300 300 600 350 T 1200 350 L 1200 400 L 0 400 Z" fill="rgba(255,255,255,0.05)" />
 </svg>`;
-
-export default {
+var worker_default = {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
-
-    // 1. Static asset or SVG fallbacks
     if (path === "/header/mothotsi.jpg" || path === "/mothotsi.jpg") {
       return new Response(FALLBACK_HERO_SVG, {
-        headers: { "Content-Type": "image/svg+xml", "Cache-Control": "public, max-age=86400" },
+        headers: { "Content-Type": "image/svg+xml", "Cache-Control": "public, max-age=86400" }
       });
     }
-
-    // 2. Main Page (Index.html)
     if (path === "/" || path === "/index.html") {
-      // Return static index.html from files if served, but since Wrangler uploads worker and files aren't automatically packaged
-      // except as text in the worker bundle, let's embed index.html & other files for robust hosting.
       return new Response(indexHtml, {
-        headers: { "Content-Type": "text/html; charset=utf-8" },
+        headers: { "Content-Type": "text/html; charset=utf-8" }
       });
     }
-
-    // 3. Admin Panel HTML Page
     if (path === "/admin" || path === "/admin.html") {
       return new Response(adminHtml, {
-        headers: { "Content-Type": "text/html; charset=utf-8" },
+        headers: { "Content-Type": "text/html; charset=utf-8" }
       });
     }
-
-    // 4. Server-Side Rendered Gallery Page
     if (path === "/gallery" || path === "/gallery.html") {
       return await handleGallerySSR(env);
     }
-
-    // 5. Image Serving Endpoint (Serves binary raw image from KV)
     if (path.startsWith("/image/")) {
       const imgId = path.substring(7);
       if (!imgId) {
         return new Response("Missing Image ID", { status: 400 });
       }
-
-      // Read image content from Cloudflare KV
       const imgData = await env.FIRE_KV.get(`img:${imgId}`, { type: "arrayBuffer" });
       if (!imgData) {
-        // Return placeholder or SVG fallback
         return new Response(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200" style="background:#f1f5f9;"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#64748b" font-family="sans-serif">Image Not Found</text></svg>`, {
           headers: { "Content-Type": "image/svg+xml" },
           status: 404
         });
       }
-
-      // Try to determine content-type or fallback to generic image/jpeg
       const metadata = await env.FIRE_KV.get(`meta:${imgId}`, { type: "json" });
-      const contentType = (metadata && metadata.contentType) || "image/jpeg";
-
+      const contentType = metadata && metadata.contentType || "image/jpeg";
       return new Response(imgData, {
         headers: {
           "Content-Type": contentType,
@@ -88,60 +96,39 @@ export default {
         }
       });
     }
-
-    // 6. API Endpoint: List Images (JSON)
     if (path === "/api/images") {
-      // Authorization Check
       const authHeader = request.headers.get("Authorization");
-      // Optional check for authentication; gallery also fetches images on admin dashboard.
-      // Let's protect if it's admin loading, or let's keep it public for listing if needed.
-      // Since it's public for gallery page, let's allow public read on listing.
       const images = await getImageList(env);
       return new Response(JSON.stringify(images), {
         headers: { "Content-Type": "application/json" }
       });
     }
-
-    // 7. API Endpoint: Upload Image
     if (path === "/api/upload" && request.method === "POST") {
       const authorized = checkAuth(request);
       if (!authorized) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" } });
       }
-
       try {
         const formData = await request.formData();
         const file = formData.get("file");
         const title = formData.get("title") || "Untitled Project";
-
         if (!file || !(file instanceof File)) {
           return new Response(JSON.stringify({ error: "No image file provided" }), { status: 400 });
         }
-
         const id = crypto.randomUUID();
         const arrayBuffer = await file.arrayBuffer();
         const contentType = file.type || "image/jpeg";
-
-        // Store image data in KV with img: prefix
         await env.FIRE_KV.put(`img:${id}`, arrayBuffer);
-
-        // Retrieve existing index list
         const imageList = await getImageList(env);
-
-        // Add new image metadata to list
         const newImage = {
           id,
           title: String(title),
           contentType,
           uploadedAt: Date.now()
         };
-        imageList.unshift(newImage); // Add to beginning of array so newest shows first
-
-        // Store updated metadata index
+        imageList.unshift(newImage);
         await env.FIRE_KV.put("gallery_images_index", JSON.stringify(imageList));
-        // Also store individual metadata for content-type caching/serving
         await env.FIRE_KV.put(`meta:${id}`, JSON.stringify(newImage));
-
         return new Response(JSON.stringify({ success: true, image: newImage }), {
           headers: { "Content-Type": "application/json" }
         });
@@ -149,93 +136,66 @@ export default {
         return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { "Content-Type": "application/json" } });
       }
     }
-
-    // 8. API Endpoint: Edit Title
     if (path === "/api/edit" && request.method === "POST") {
       const authorized = checkAuth(request);
       if (!authorized) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" } });
       }
-
       try {
         const { id, title } = await request.json();
         if (!id || !title) {
           return new Response(JSON.stringify({ error: "Missing required fields" }), { status: 400 });
         }
-
         const imageList = await getImageList(env);
-        const imgIndex = imageList.findIndex(img => img.id === id);
-
+        const imgIndex = imageList.findIndex((img) => img.id === id);
         if (imgIndex === -1) {
           return new Response(JSON.stringify({ error: "Image not found" }), { status: 404 });
         }
-
-        // Update title
         imageList[imgIndex].title = title;
-
-        // Save index
         await env.FIRE_KV.put("gallery_images_index", JSON.stringify(imageList));
-
-        // Save individual metadata
         const individualMeta = await env.FIRE_KV.get(`meta:${id}`, { type: "json" }) || {};
         individualMeta.title = title;
         await env.FIRE_KV.put(`meta:${id}`, JSON.stringify(individualMeta));
-
         return new Response(JSON.stringify({ success: true }), { headers: { "Content-Type": "application/json" } });
       } catch (err) {
         return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { "Content-Type": "application/json" } });
       }
     }
-
-    // 9. API Endpoint: Delete Image
     if (path === "/api/delete" && request.method === "POST") {
       const authorized = checkAuth(request);
       if (!authorized) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" } });
       }
-
       try {
         const { id } = await request.json();
         if (!id) {
           return new Response(JSON.stringify({ error: "Missing ID" }), { status: 400 });
         }
-
-        // Remove from list
         let imageList = await getImageList(env);
-        imageList = imageList.filter(img => img.id !== id);
+        imageList = imageList.filter((img) => img.id !== id);
         await env.FIRE_KV.put("gallery_images_index", JSON.stringify(imageList));
-
-        // Remove actual KV entries
         await env.FIRE_KV.delete(`img:${id}`);
         await env.FIRE_KV.delete(`meta:${id}`);
-
         return new Response(JSON.stringify({ success: true }), { headers: { "Content-Type": "application/json" } });
       } catch (err) {
         return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { "Content-Type": "application/json" } });
       }
     }
-
-    // Default: Resource not found
     return new Response("Not Found", { status: 404 });
-  },
+  }
 };
-
-// Helper to authenticate request
 function checkAuth(request) {
   const authHeader = request.headers.get("Authorization");
   return authHeader === ADMIN_PASSWORD;
 }
-
-// Helper to retrieve all image metadata
+__name(checkAuth, "checkAuth");
 async function getImageList(env) {
   const index = await env.FIRE_KV.get("gallery_images_index", { type: "json" });
   return index || [];
 }
-
-// Server-Side Rendering (SSR) of gallery.html using KV data
+__name(getImageList, "getImageList");
 async function handleGallerySSR(env) {
   const images = await getImageList(env);
-
   let galleryTilesHtml = "";
   if (images.length === 0) {
     galleryTilesHtml = `<div style="grid-column: 1 / -1; text-align: center; color: #64748b; padding: 40px 0;">
@@ -243,7 +203,7 @@ async function handleGallerySSR(env) {
       <p>Check back later or contact admin to upload project pictures!</p>
     </div>`;
   } else {
-    images.forEach(img => {
+    images.forEach((img) => {
       galleryTilesHtml += `
       <div class="tile">
         <img src="/image/${img.id}" alt="${escapeHtml(img.title)}" />
@@ -251,8 +211,6 @@ async function handleGallerySSR(env) {
       </div>`;
     });
   }
-
-  // Inject rendered galleryTilesHtml into base galleryTemplate
   const renderedHtml = galleryTemplate.replace(
     `<div class="gallery">
       <div class="tile"><img src="header/mothotsi.jpg" alt="Project 1" /><p>Project 1</p></div>
@@ -261,18 +219,16 @@ async function handleGallerySSR(env) {
     </div>`,
     `<div class="gallery">${galleryTilesHtml}</div>`
   );
-
   return new Response(renderedHtml, {
     headers: { "Content-Type": "text/html; charset=utf-8" }
   });
 }
-
+__name(handleGallerySSR, "handleGallerySSR");
 function escapeHtml(str) {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
-
-// Static HTML templates to be embedded directly into worker.js bundle
-const indexHtml = `<!DOCTYPE html>
+__name(escapeHtml, "escapeHtml");
+var indexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -535,14 +491,14 @@ const indexHtml = `<!DOCTYPE html>
       <p>Contact us today for expert steel, aluminium, gate, and garage door services.</p>
       <div class="contact-list">
         <a href="tel:+2646228454">Call: 064 622 8454</a>
-        <a class="whatsapp" href="https://wa.me/2646228454" target="_blank" rel="noopener noreferrer"><span class="icon">💬</span> WhatsApp: 064 622 8454</a>
+        <a class="whatsapp" href="https://wa.me/2646228454" target="_blank" rel="noopener noreferrer"><span class="icon">\u{1F4AC}</span> WhatsApp: 064 622 8454</a>
         <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer">Facebook: Mothotsi Security Steel</a>
       </div>
     </section>
   </main>
 
   <footer>
-    <p>© 2026 Mothotsi Security Steel. All rights reserved.</p>
+    <p>\xA9 2026 Mothotsi Security Steel. All rights reserved.</p>
   </footer>
 
   <script>
@@ -564,11 +520,11 @@ const indexHtml = `<!DOCTYPE html>
         });
       });
     }
-  </script>
+  <\/script>
 </body>
 </html>
  `;
-const adminHtml = `<!DOCTYPE html>
+var adminHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -774,7 +730,7 @@ const adminHtml = `<!DOCTYPE html>
       <form id="loginForm">
         <div class="form-group">
           <label for="password">Enter Passcode</label>
-          <input type="password" id="password" class="form-control" placeholder="••••••••" required />
+          <input type="password" id="password" class="form-control" placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" required />
         </div>
         <button type="submit" class="btn btn-primary" style="width: 100%;">Access Panel</button>
       </form>
@@ -1099,11 +1055,11 @@ const adminHtml = `<!DOCTYPE html>
 
     // Start App
     init();
-  </script>
+  <\/script>
 </body>
 </html>
 `;
-const galleryTemplate = `<!DOCTYPE html>
+var galleryTemplate = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -1137,3 +1093,186 @@ const galleryTemplate = `<!DOCTYPE html>
   </div>
 </body>
 </html>`;
+
+// ../home/jules/.npm/_npx/32026684e21afda6/node_modules/wrangler/templates/middleware/middleware-ensure-req-body-drained.ts
+var drainBody = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx) => {
+  try {
+    return await middlewareCtx.next(request, env);
+  } finally {
+    try {
+      if (request.body !== null && !request.bodyUsed) {
+        const reader = request.body.getReader();
+        while (!(await reader.read()).done) {
+        }
+      }
+    } catch (e) {
+      console.error("Failed to drain the unused request body.", e);
+    }
+  }
+}, "drainBody");
+var middleware_ensure_req_body_drained_default = drainBody;
+
+// ../home/jules/.npm/_npx/32026684e21afda6/node_modules/wrangler/templates/middleware/middleware-miniflare3-json-error.ts
+function reduceError(e) {
+  return {
+    name: e?.name,
+    message: e?.message ?? String(e),
+    stack: e?.stack,
+    cause: e?.cause === void 0 ? void 0 : reduceError(e.cause)
+  };
+}
+__name(reduceError, "reduceError");
+var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx) => {
+  try {
+    return await middlewareCtx.next(request, env);
+  } catch (e) {
+    const error = reduceError(e);
+    const body = JSON.stringify(error);
+    const headers = {
+      "Content-Type": "application/json",
+      "MF-Experimental-Error-Stack": "true"
+    };
+    const encoded = encodeURIComponent(body);
+    if (encoded.length <= 8192) {
+      headers["MF-Experimental-Error-Stack-Payload"] = encoded;
+    }
+    return new Response(body, { status: 500, headers });
+  }
+}, "jsonError");
+var middleware_miniflare3_json_error_default = jsonError;
+
+// .wrangler/tmp/bundle-TDwAxA/middleware-insertion-facade.js
+var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
+  middleware_ensure_req_body_drained_default,
+  middleware_miniflare3_json_error_default
+];
+var middleware_insertion_facade_default = worker_default;
+
+// ../home/jules/.npm/_npx/32026684e21afda6/node_modules/wrangler/templates/middleware/common.ts
+var __facade_middleware__ = [];
+function __facade_register__(...args) {
+  __facade_middleware__.push(...args.flat());
+}
+__name(__facade_register__, "__facade_register__");
+function __facade_invokeChain__(request, env, ctx, dispatch, middlewareChain) {
+  const [head, ...tail] = middlewareChain;
+  const middlewareCtx = {
+    dispatch,
+    next(newRequest, newEnv) {
+      return __facade_invokeChain__(newRequest, newEnv, ctx, dispatch, tail);
+    }
+  };
+  return head(request, env, ctx, middlewareCtx);
+}
+__name(__facade_invokeChain__, "__facade_invokeChain__");
+function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
+  return __facade_invokeChain__(request, env, ctx, dispatch, [
+    ...__facade_middleware__,
+    finalMiddleware
+  ]);
+}
+__name(__facade_invoke__, "__facade_invoke__");
+
+// .wrangler/tmp/bundle-TDwAxA/middleware-loader.entry.ts
+var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
+  constructor(scheduledTime, cron, noRetry) {
+    this.scheduledTime = scheduledTime;
+    this.cron = cron;
+    this.#noRetry = noRetry;
+  }
+  scheduledTime;
+  cron;
+  static {
+    __name(this, "__Facade_ScheduledController__");
+  }
+  #noRetry;
+  noRetry() {
+    if (!(this instanceof ___Facade_ScheduledController__)) {
+      throw new TypeError("Illegal invocation");
+    }
+    this.#noRetry();
+  }
+};
+function wrapExportedHandler(worker) {
+  if (__INTERNAL_WRANGLER_MIDDLEWARE__ === void 0 || __INTERNAL_WRANGLER_MIDDLEWARE__.length === 0) {
+    return worker;
+  }
+  for (const middleware of __INTERNAL_WRANGLER_MIDDLEWARE__) {
+    __facade_register__(middleware);
+  }
+  const fetchDispatcher = /* @__PURE__ */ __name(function(request, env, ctx) {
+    if (worker.fetch === void 0) {
+      throw new Error("Handler does not export a fetch() function.");
+    }
+    return worker.fetch(request, env, ctx);
+  }, "fetchDispatcher");
+  return {
+    ...worker,
+    fetch(request, env, ctx) {
+      const dispatcher = /* @__PURE__ */ __name(function(type, init) {
+        if (type === "scheduled" && worker.scheduled !== void 0) {
+          const controller = new __Facade_ScheduledController__(
+            Date.now(),
+            init.cron ?? "",
+            () => {
+            }
+          );
+          return worker.scheduled(controller, env, ctx);
+        }
+      }, "dispatcher");
+      return __facade_invoke__(request, env, ctx, dispatcher, fetchDispatcher);
+    }
+  };
+}
+__name(wrapExportedHandler, "wrapExportedHandler");
+function wrapWorkerEntrypoint(klass) {
+  if (__INTERNAL_WRANGLER_MIDDLEWARE__ === void 0 || __INTERNAL_WRANGLER_MIDDLEWARE__.length === 0) {
+    return klass;
+  }
+  for (const middleware of __INTERNAL_WRANGLER_MIDDLEWARE__) {
+    __facade_register__(middleware);
+  }
+  return class extends klass {
+    #fetchDispatcher = /* @__PURE__ */ __name((request, env, ctx) => {
+      this.env = env;
+      this.ctx = ctx;
+      if (super.fetch === void 0) {
+        throw new Error("Entrypoint class does not define a fetch() function.");
+      }
+      return super.fetch(request);
+    }, "#fetchDispatcher");
+    #dispatcher = /* @__PURE__ */ __name((type, init) => {
+      if (type === "scheduled" && super.scheduled !== void 0) {
+        const controller = new __Facade_ScheduledController__(
+          Date.now(),
+          init.cron ?? "",
+          () => {
+          }
+        );
+        return super.scheduled(controller);
+      }
+    }, "#dispatcher");
+    fetch(request) {
+      return __facade_invoke__(
+        request,
+        this.env,
+        this.ctx,
+        this.#dispatcher,
+        this.#fetchDispatcher
+      );
+    }
+  };
+}
+__name(wrapWorkerEntrypoint, "wrapWorkerEntrypoint");
+var WRAPPED_ENTRY;
+if (typeof middleware_insertion_facade_default === "object") {
+  WRAPPED_ENTRY = wrapExportedHandler(middleware_insertion_facade_default);
+} else if (typeof middleware_insertion_facade_default === "function") {
+  WRAPPED_ENTRY = wrapWorkerEntrypoint(middleware_insertion_facade_default);
+}
+var middleware_loader_entry_default = WRAPPED_ENTRY;
+export {
+  __INTERNAL_WRANGLER_MIDDLEWARE__,
+  middleware_loader_entry_default as default
+};
+//# sourceMappingURL=worker.js.map
