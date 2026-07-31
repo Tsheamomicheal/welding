@@ -1,0 +1,7 @@
+name = "shrill-disk-8aac"
+main = "worker.js"
+compatibility_date = "2024-04-03"
+
+[[kv_namespaces]]
+binding = "FIRE_KV"
+id = "ea725a8e47d84889a5b7533ec945f361"
